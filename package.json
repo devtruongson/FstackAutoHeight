@@ -1,6 +1,6 @@
 {
   "name": "fstack-auto-height",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Auto-resize an iframe to fit its content height via postMessage, with optional resize callback and scroll-to support. Generic, no third-party dependency.",
   "license": "MIT",
   "author": "",

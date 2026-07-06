@@ -2,7 +2,9 @@
 
 Auto-resize an `<iframe>` to fit the height of the content it hosts, using
 `window.postMessage`. Zero dependencies, no hard-coded third-party domain
-checks — this is a generic rewrite of an internal iframe auto-sizing helper.
+checks. One package covers both sides of the handshake: `set()` on the
+parent page that hosts the iframe, and `load()`/`scrollTo()` on the page
+loaded inside it.
 
 ## Install
 
@@ -32,6 +34,24 @@ const autoHeight = new FstackAutoHeight({
 autoHeight.set(document.querySelector('iframe')!);
 ```
 
+### Usage inside the iframe
+
+On the page that gets loaded *inside* the iframe, use the same singleton to
+report its content height back to the parent:
+
+```ts
+import FstackAutoHeight from 'fstack-auto-height';
+
+FstackAutoHeight.load('content-wrapper-id');
+// or watch several elements and report the tallest:
+// FstackAutoHeight.load(['header-id', 'content-wrapper-id']);
+
+// optional: ask the parent to scroll this iframe into view
+FstackAutoHeight.scrollTo('top'); // or 'bottom' or a number
+```
+
+`load()` is a no-op when the page isn't actually framed (`window === window.top`).
+
 ## Usage (script tag / UMD)
 
 ```html
@@ -39,6 +59,8 @@ autoHeight.set(document.querySelector('iframe')!);
 <script>
   // iife build exposes the module's exports under window.FstackAutoHeight
   window.FstackAutoHeight.default.set('my-iframe-id');
+  // or, inside the framed page:
+  // window.FstackAutoHeight.default.load('content-wrapper-id');
 </script>
 ```
 
@@ -50,29 +72,47 @@ autoHeight.set(document.querySelector('iframe')!);
 | --- | --- | --- | --- |
 | `allowedOrigin` | `string \| RegExp \| (origin: string) => boolean` | accepts any origin | restrict which `postMessage` origins are trusted |
 | `activationMessagePrefix` | `string` | `"ActivateFstackAutoHeight"` | handshake message prefix sent into the iframe |
+| `pollIntervalMs` | `number` | `30` | how often the framed page (via `load()`) polls its watched elements for height changes |
 
 ### `.set(iFrameIdOrElement, resizeCallback?, isHeightToParent?)`
 
-Registers an iframe for auto-height handling.
+Call from the parent page that hosts the `<iframe>`. Registers it for auto-height handling.
 
 - `iFrameIdOrElement` — element id string, or the `HTMLIFrameElement` itself
 - `resizeCallback` — optional, called with the height delta in px on every resize
 - `isHeightToParent` — optional, tells the framed page the reported height is meant for the parent window
 
+### `.load(idsOrElements)`
+
+Call from the page loaded *inside* the iframe. Registers the element(s) whose
+tallest `offsetHeight` is reported back to the parent whenever it changes.
+
+- `idsOrElements` — an element id, an `HTMLElement`, or an array of either
+- Returns `true` if at least one element was registered
+
+### `.scrollTo(scrollY)`
+
+Call from the page loaded *inside* the iframe (after `load()` has activated)
+to ask the parent to scroll this iframe into view.
+
+- `scrollY` — `'top'`, `'bottom'`, or a number (pixel offset)
+
 ## Protocol
 
-The page loaded *inside* the iframe must implement its side of the handshake:
+Used internally between `.set()` and `.load()`/`.scrollTo()`; documented here
+in case you need to implement one side with something other than this library.
 
-1. On receiving the activation message (`${activationMessagePrefix}-${index}`,
-   with a trailing `-1` when `isHeightToParent` is used), start measuring its
-   own content height.
-2. Whenever the height changes, send:
+1. The parent sends the activation message
+   (`${activationMessagePrefix}-${index}`, with a trailing `-1` when
+   `isHeightToParent` is used) once the iframe is registered, and again on `load`.
+2. The framed page, upon receiving that activation message, measures its own
+   content height and sends:
    ```js
    window.parent.postMessage(JSON.stringify({
      iFrame: { index, height }
    }), '*');
    ```
-3. Optionally, ask the parent to scroll the iframe into view:
+3. Optionally, the framed page can ask the parent to scroll it into view:
    ```js
    window.parent.postMessage(JSON.stringify({
      scrollTo: { index, scrollY: 'top' } // or 'bottom' or a number

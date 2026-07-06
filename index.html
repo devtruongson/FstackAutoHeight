@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+    </head>
+    <body>
+        <iframe
+            id="dev-auto"
+            src="https://fstack.io.vn/"
+            frameborder="0"
+        ></iframe>
+        <script src="https://unpkg.com/fstack-auto-height/dist/index.global.js"></script>
+        <script>
+            // iife build exposes the module's exports under window.FstackAutoHeight
+            window.FstackAutoHeight.default.set("dev-auto");
+        </script>
+    </body>
+</html>
