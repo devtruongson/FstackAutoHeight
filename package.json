@@ -1,0 +1,39 @@
+{
+  "name": "fstack-auto-height",
+  "version": "0.1.0",
+  "description": "Auto-resize an iframe to fit its content height via postMessage, with optional resize callback and scroll-to support. Generic, no third-party dependency.",
+  "license": "MIT",
+  "author": "",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "unpkg": "dist/index.global.js",
+  "jsdelivr": "dist/index.global.js",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm,iife --global-name FstackAutoHeight --dts --clean --minify",
+    "dev": "tsup src/index.ts --format cjs,esm,iife --global-name FstackAutoHeight --dts --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "iframe",
+    "auto-height",
+    "autoresize",
+    "resize",
+    "postmessage"
+  ],
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "typescript": "^5.6.3"
+  }
+}
